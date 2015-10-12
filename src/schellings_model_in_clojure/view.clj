@@ -63,7 +63,9 @@
     ; key to be unique for each watcher on a given position; I'm using
     ; neighbor for that, since no position should have more than one
     ; watcher for a given neighbor.
-    (add-watch position neighbor
+    (swap! (board-map coord) assoc :neighbors (conj ((deref (board-map coord)) :neighbors) (if (deref neighbor) ((deref neighbor) :individual))))
+
+    (add-watch position (if (deref neighbor) ((deref neighbor) :individual))
                (partial model/handle-neighbor-change neighbor))))
 
 (defn bind-tiles [coordinates board-map tile-map]

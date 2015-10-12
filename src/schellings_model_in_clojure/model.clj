@@ -14,6 +14,31 @@
 (def population (atom []))
 (def positions (atom []))
 
+
+(defn myOwnLoop [neighbors likeMe color]
+  (if (= (count neighbors) 0)
+    likeMe
+    (if (= (deref (first neighbors)) color)
+      (swap! likeMe inc)
+    )
+  )
+  (if (> (count neighbors) 0)
+    (myOwnLoop (rest neighbors) likeMe color)
+  )
+  )
+
+(defn movePosition [me likeMe]
+  (println "I am not happy! " (deref likeMe)))
+
+(defn amIHappy [me]
+  (let [totalNeighbors (count (me :neighbors))
+        likeMe (atom 0)
+        color (deref (me :individual))]
+  (if (> totalNeighbors 2)
+    (myOwnLoop (me :neighbors) likeMe color)
+  )
+  (if (> totalNeighbors 2) (if (< (/ (deref likeMe) totalNeighbors) (deref similarity-atom)) (movePosition me likeMe) (println "I am happy!")))))
+
 (defn handle-neighbor-change
   "Called when the state of a neighboring position changes.
    The first argument will be the position atom that is being
@@ -29,7 +54,12 @@
   ; probably where you want to call send to handle whatever
   ; needs to be done. Otherwise everything will end up happening in
   ; the main thread.
-  (println (str "I am " me " and my neighbor " neighbor " (key " key ") changed from " old-state " to " new-state)))
+  ;(println (str "Color " (if (deref me) ((deref me) :neighbors))))
+  (amIHappy (deref me)))
+
+
+
+
 
 ;; You may be able to leave this alone, but feel free to change it
 ;; if you decide to structure your solution differently.
@@ -38,10 +68,20 @@
   if there's no individual there."
   []
   (if (< (rand) @empty-atom)
-    (atom nil)
+    (let [individual (agent "white")
+          position (atom {:individual individual :neighbors (list)})]
+      ; I need to have all the individuals together in
+      ; a collection so I can `send` them all a "message"
+      ; when, e.g., we hit the "Start" button.
+      (swap! population conj individual)
+      ; I'm not sure if I need all the positions, actually,
+      ; but I found that useful for debugging.
+      (swap! positions conj position)
+      position)
+
     (let [color (if (< (rand) @balance-atom) :red :blue)
           individual (agent color)
-          position (atom individual)]
+          position (atom {:individual individual :neighbors (list)})]
       ; I need to have all the individuals together in
       ; a collection so I can `send` them all a "message"
       ; when, e.g., we hit the "Start" button.
@@ -51,6 +91,12 @@
       (swap! positions conj position)
       position)))
 
+(defn get-individual-by-position
+  "This will get an individual from populations and return it."
+  [position]
+  (let [x position]
+     (deref (x :individual))))
+
 (defn extract-color
   "Takes an individual agent and returns the color of the individual
    at that position. You'll need to implement this so that it returns
@@ -59,8 +105,7 @@
   ; This returns a totally random color so it should be quite
   ; obvious if you haven't dealt with this. You can specify colors
   ; with things like strings ("blue") or keywords (:red).
-  (seesaw.color/color (rand-int 256)
-                      (rand-int 256)
-                      (rand-int 256)
-                      (rand-int 256))
+  (seesaw.color/color (get-individual-by-position position))
   )
+
+
