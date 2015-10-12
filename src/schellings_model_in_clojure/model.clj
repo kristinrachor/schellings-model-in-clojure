@@ -58,9 +58,6 @@
   (amIHappy (deref me)))
 
 
-
-
-
 ;; You may be able to leave this alone, but feel free to change it
 ;; if you decide to structure your solution differently.
 (defn make-position
