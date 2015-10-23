@@ -25,7 +25,6 @@
         s (second (deref model/positions))
         si @s]
     (Thread/sleep 4000)
-    (println "Stuff")
     (println (nth (deref model/positions) 0))
     (model/amIHappy (nth (deref model/positions) 0)))
     (Thread/sleep 2000)

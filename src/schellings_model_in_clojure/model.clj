@@ -1,6 +1,6 @@
 (ns schellings-model-in-clojure.model)
 
-(def default-similarity 0.7)
+(def default-similarity 0.3)
 (def default-balance 0.5)
 (def default-empty 0.1)
 
@@ -59,7 +59,6 @@
           (recur)))))
 
 (defn switchColor [_ color]
-  (println "COLOOR: " color)
   color
 )
 
@@ -68,33 +67,43 @@
   )
 
 (defn switchEmpties [empties newEmpty oldEmptyIndex]
-    (println "in switch empties: " (count empties))
-    (println "in switch empties old index" (int oldEmptyIndex))
     (assoc empties (int oldEmptyIndex) newEmpty)
   )
 
-(defn movePosition [me likeMe]
+(defn movePosition [me]
   ;choose random spot in emptyPostions
   ;remove it from emptyPosition and swap colors
   ;add me onto emptyPositions
   (let [randNum (Math/floor (rand (count (deref emptyPositions))))
         oldColor (deref ((deref me) :individual))]
-  (println "I am not happy! " randNum)
+    (println "Im not happy")
   (send ((deref me) :individual) switchColor :white)
-  (send ((deref (nth ((swap-returning-prev! emptyPositions switchEmpties me randNum) 0) (int randNum))) :individual) switchColor oldColor)
+  (swap! me update :individual switchColor (agent :white))
+
+  (let [oldAtom(nth ((swap-returning-prev! emptyPositions switchEmpties me randNum) 0) (int randNum))]
+  (send ((deref oldAtom) :individual) switchColor oldColor)
+  (swap! oldAtom update :individual switchColor (agent oldColor))
+
+  (let [totalNeighbors (count ((deref oldAtom) :neighbors))
+        likeMe (atom 0)
+        color (deref ((deref oldAtom) :individual))]
+  (if (> totalNeighbors 2)
+    (myOwnLoop ((deref oldAtom) :neighbors) likeMe color)
+  )
+  (if (> totalNeighbors 2) (if (< (/ (deref likeMe) totalNeighbors) (deref similarity-atom)) (movePosition oldAtom) ))
+    oldAtom))
   ;(send emptyPositions switchEmptyPosition me randNum)
   ;(send emptyPositions swapPositions me randNum)
 ))
 
 (defn amIHappy [me]
-  (println "amihappy")
   (let [totalNeighbors (count ((deref me) :neighbors))
         likeMe (atom 0)
         color (deref ((deref me) :individual))]
   (if (> totalNeighbors 2)
     (myOwnLoop ((deref me) :neighbors) likeMe color)
   )
-  (if (> totalNeighbors 2) (if (< (/ (deref likeMe) totalNeighbors) (deref similarity-atom)) (movePosition me likeMe) (println "I am happy!")))
+  (if (> totalNeighbors 2) (if (< (/ (deref likeMe) totalNeighbors) (deref similarity-atom)) (movePosition me) ))
     me))
 
 (defn handle-neighbor-change
@@ -113,7 +122,6 @@
   ; needs to be done. Otherwise everything will end up happening in
   ; the main thread.
   ;(println (str "Color " (if (deref me) ((deref me) :neighbors))))
-  (println "There was a change")
   (if (not= :white (deref ((deref me) :individual))) (amIHappy me)))
 
 

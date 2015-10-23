@@ -65,7 +65,7 @@
     ; watcher for a given neighbor.
     (swap! (board-map coord) assoc :neighbors (conj ((deref (board-map coord)) :neighbors) ((deref neighbor) :individual)))
 
-    (add-watch position ((deref neighbor) :individual)
+    (add-watch position neighbor
                (partial model/handle-neighbor-change neighbor))))
 
 (defn bind-tiles [coordinates board-map tile-map]
@@ -76,6 +76,7 @@
   (doseq [c coordinates]
     (sb/bind (board-map c)
              (sb/transform model/extract-color)
+
              (sb/property (tile-map c) :background))))
 
 (defn create-tile-array
