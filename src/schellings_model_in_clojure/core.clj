@@ -24,7 +24,10 @@
         fi @f
         s (second (deref model/positions))
         si @s]
-    (Thread/sleep 1000)
-    (swap! f (fn [_] si))
-    (swap! s (fn [_] fi)))
+    (Thread/sleep 4000)
+    (println "Stuff")
+    (println (nth (deref model/positions) 0))
+    (model/amIHappy (nth (deref model/positions) 0)))
+    (Thread/sleep 2000)
+    (println (nth (deref model/positions) 0))
   )
